@@ -34,18 +34,18 @@ var durationMetrics = promauto.NewSummary(prometheus.SummaryOpts{
 	Help: "duration of clamscan"})
 
 func main() {
-	var tcpPort, httpPort string
-	flag.StringVar(&tcpPort, "tcp-port", "9000", "port to listen to tcp connections on from clamscan netcat pipe")
-	flag.StringVar(&httpPort, "http-port", "9967", "port to listen to http connections from prometheus for /metrics")
+	var tcpAddr, httpAddr string
+	flag.StringVar(&tcpAddr, "tcp-addr", ":9000", "addr to listen to tcp connections on from clamscan netcat pipe")
+	flag.StringVar(&httpAddr, "http-addr", ":9967", "addr to listen to http connections from prometheus for /metrics")
 	flag.Parse()
-	ln, err := net.Listen("tcp", ":"+tcpPort)
+	ln, err := net.Listen("tcp", tcpAddr)
 	if err != nil {
-		logrus.Errorf("cannot start socket listener on port %s: %s", tcpPort, err)
+		logrus.Errorf("cannot start socket listener on addr %s: %s", tcpAddr, err)
 		return
 	}
 	srv, shutdown := gograce.NewServerWithTimeout(10 * time.Second)
 	srv.Handler = http.DefaultServeMux
-	srv.Addr = ":" + httpPort
+	srv.Addr = httpAddr
 	go func() {
 		err := srv.ListenAndServe()
 		if err != nil && !errors.Is(err, http.ErrServerClosed) {
